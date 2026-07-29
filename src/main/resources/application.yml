@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: notifyhub
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/notifyhub
+    username: notifyhub
+    password: notifyhub
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # 'update' is fine for local dev; we will move to Flyway/Liquibase migrations later
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
