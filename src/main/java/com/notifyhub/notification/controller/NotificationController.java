@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import java.util.List;
 
 import java.net.URI;
 
@@ -22,6 +23,16 @@ public class NotificationController {
 
 
     private final NotificationService notificationService;
+    @GetMapping
+    public ResponseEntity<List<NotificationResponse>> getAll(
+            @AuthenticationPrincipal AppUserDetails userDetails) {
+
+        return ResponseEntity.ok(
+                notificationService.getAll(
+                        userDetails.getAppUser()
+                )
+        );
+    }
 
     @PostMapping
     public ResponseEntity<NotificationResponse> send(
@@ -37,4 +48,17 @@ public class NotificationController {
                 .created(URI.create("/api/notifications/" + response.getId()))
                 .body(response);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<NotificationResponse> getById(
+            @AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                notificationService.getById(
+                        userDetails.getAppUser(),
+                        id
+                )
+        );
+    }
+
 }
