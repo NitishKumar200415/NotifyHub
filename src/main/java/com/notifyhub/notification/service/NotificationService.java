@@ -4,6 +4,7 @@ import com.notifyhub.exception.NotificationNotFoundException;
 import com.notifyhub.notification.dto.NotificationResponse;
 import com.notifyhub.notification.dto.SendNotificationRequest;
 import com.notifyhub.notification.entity.Notification;
+import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.repository.NotificationRepository;
 import com.notifyhub.user.AppUser;
@@ -18,6 +19,7 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final EmailSenderService emailSenderService;
 
     @Transactional
     public NotificationResponse send(AppUser appUser,
@@ -35,6 +37,23 @@ public class NotificationService {
                 .build();
 
         Notification savedNotification = notificationRepository.save(notification);
+
+        if (savedNotification.getChannel() == NotificationChannel.EMAIL) {
+
+            boolean emailSent = emailSenderService.sendEmail(
+                    savedNotification.getRecipientAddress(),
+                    "NotifyHub Notification",
+                    savedNotification.getPayload()
+            );
+
+            if (emailSent) {
+                savedNotification.setStatus(NotificationStatus.SENT);
+            } else {
+                savedNotification.setStatus(NotificationStatus.FAILED);
+            }
+
+            notificationRepository.save(savedNotification);
+        }
 
         return NotificationResponse.from(savedNotification);
     }
