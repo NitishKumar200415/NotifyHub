@@ -7,6 +7,7 @@ import com.notifyhub.notification.entity.Notification;
 import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.repository.NotificationRepository;
+import com.notifyhub.notification.service.EmailSenderService;
 import com.notifyhub.notification.service.NotificationService;
 import com.notifyhub.user.AppUser;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +29,9 @@ class NotificationServiceTest {
 
     @Mock
     private NotificationRepository notificationRepository;
+
+    @Mock
+    private EmailSenderService emailSenderService;
 
     @InjectMocks
     private NotificationService notificationService;
@@ -63,15 +67,80 @@ class NotificationServiceTest {
         when(notificationRepository.save(any(Notification.class)))
                 .thenReturn(notification);
 
+        when(emailSenderService.sendEmail(
+                anyString(),
+                anyString(),
+                anyString()
+        )).thenReturn(true);
+
         NotificationResponse response =
                 notificationService.send(user, request);
 
         assertNotNull(response);
         assertEquals(1L, response.getId());
-        assertEquals(NotificationStatus.QUEUED, response.getStatus());
+        assertEquals(NotificationStatus.SENT, response.getStatus());
         assertEquals("john@example.com", response.getRecipientAddress());
 
-        verify(notificationRepository).save(any(Notification.class));
+        verify(notificationRepository, times(2))
+                .save(any(Notification.class));
+
+        verify(emailSenderService).sendEmail(
+                anyString(),
+                anyString(),
+                anyString()
+        );
+    }
+
+    @Test
+    void send_ShouldMarkNotificationAsFailed_WhenEmailSendingFails() {
+
+        AppUser user = AppUser.builder()
+                .id(1L)
+                .email("test@example.com")
+                .build();
+
+        SendNotificationRequest request = new SendNotificationRequest();
+        request.setRecipientAddress("john@example.com");
+        request.setChannel(NotificationChannel.EMAIL);
+        request.setTemplateCode("WELCOME");
+        request.setPayload("{\"name\":\"John\"}");
+        request.setIdempotencyKey("abc-123");
+
+        Notification notification = Notification.builder()
+                .id(1L)
+                .recipientUser(user)
+                .recipientAddress(request.getRecipientAddress())
+                .channel(request.getChannel())
+                .templateCode(request.getTemplateCode())
+                .payload(request.getPayload())
+                .idempotencyKey(request.getIdempotencyKey())
+                .status(NotificationStatus.QUEUED)
+                .retryCount(0)
+                .createdAt(Instant.now())
+                .build();
+
+        when(notificationRepository.save(any(Notification.class)))
+                .thenReturn(notification);
+
+        when(emailSenderService.sendEmail(
+                anyString(),
+                anyString(),
+                anyString()
+        )).thenReturn(false);
+
+        NotificationResponse response =
+                notificationService.send(user, request);
+
+        assertEquals(NotificationStatus.FAILED, response.getStatus());
+
+        verify(notificationRepository, times(2))
+                .save(any(Notification.class));
+
+        verify(emailSenderService).sendEmail(
+                anyString(),
+                anyString(),
+                anyString()
+        );
     }
 
     @Test
@@ -86,7 +155,7 @@ class NotificationServiceTest {
                 .recipientUser(user)
                 .recipientAddress("john@example.com")
                 .channel(NotificationChannel.EMAIL)
-                .status(NotificationStatus.QUEUED)
+                .status(NotificationStatus.SENT)
                 .createdAt(Instant.now())
                 .build();
 
@@ -97,7 +166,7 @@ class NotificationServiceTest {
                 notificationService.getById(user, 1L);
 
         assertEquals(1L, response.getId());
-        assertEquals(NotificationStatus.QUEUED, response.getStatus());
+        assertEquals(NotificationStatus.SENT, response.getStatus());
     }
 
     @Test
@@ -128,7 +197,7 @@ class NotificationServiceTest {
                 .recipientUser(user)
                 .recipientAddress("john@example.com")
                 .channel(NotificationChannel.EMAIL)
-                .status(NotificationStatus.QUEUED)
+                .status(NotificationStatus.SENT)
                 .createdAt(Instant.now())
                 .build();
 
