@@ -6,6 +6,8 @@ import com.notifyhub.notification.dto.SendNotificationRequest;
 import com.notifyhub.notification.entity.Notification;
 import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
+import com.notifyhub.notification.messaging.NotificationEvent;
+import com.notifyhub.notification.messaging.NotificationProducer;
 import com.notifyhub.notification.repository.NotificationRepository;
 import com.notifyhub.user.AppUser;
 import jakarta.transaction.Transactional;
@@ -19,7 +21,7 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final EmailSenderService emailSenderService;
+    private final NotificationProducer notificationProducer;
 
     @Transactional
     public NotificationResponse send(AppUser appUser,
@@ -40,19 +42,13 @@ public class NotificationService {
 
         if (savedNotification.getChannel() == NotificationChannel.EMAIL) {
 
-            boolean emailSent = emailSenderService.sendEmail(
+            NotificationEvent event = new NotificationEvent(
+                    savedNotification.getId(),
                     savedNotification.getRecipientAddress(),
-                    "NotifyHub Notification",
-                    savedNotification.getPayload()
+                    savedNotification.getChannel().name()
             );
 
-            if (emailSent) {
-                savedNotification.setStatus(NotificationStatus.SENT);
-            } else {
-                savedNotification.setStatus(NotificationStatus.FAILED);
-            }
-
-            notificationRepository.save(savedNotification);
+            notificationProducer.publish(event);
         }
 
         return NotificationResponse.from(savedNotification);

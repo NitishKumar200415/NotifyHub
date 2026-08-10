@@ -25,13 +25,18 @@ spring:
     port: 587
     username: 6b89d750448349
     password: 01c3cdad5ddc55
-
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:notifyhub}
+    password: ${RABBITMQ_PASSWORD:notifyhub123}
 
 management:
   endpoints:

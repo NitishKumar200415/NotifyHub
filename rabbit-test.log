@@ -1,0 +1,147 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.notifyhub:notifyhub >-----------------------
+[INFO] Building notifyhub 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.3.4:run (default-cli) > test-compile @ notifyhub >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ notifyhub ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ notifyhub ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 35 source files with javac [debug parameters release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ notifyhub ---
+[INFO] skip non existing resourceDirectory /mnt/c/Users/HP/OneDrive/Desktop/notifyhub-1/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ notifyhub ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 3 source files with javac [debug parameters release 17] to target/test-classes
+[INFO] 
+[INFO] <<< spring-boot:3.3.4:run (default-cli) < test-compile @ notifyhub <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.3.4:run (default-cli) @ notifyhub ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-08-10T07:40:39.173Z  INFO 34057 --- [notifyhub] [           main] com.notifyhub.NotifyHubApplication       : Starting NotifyHubApplication using Java 17.0.19 with PID 34057 (/mnt/c/Users/HP/OneDrive/Desktop/notifyhub-1/target/classes started by nitish in /mnt/c/Users/HP/OneDrive/Desktop/notifyhub-1)
+2026-08-10T07:40:39.186Z  INFO 34057 --- [notifyhub] [           main] com.notifyhub.NotifyHubApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-08-10T07:40:48.543Z  INFO 34057 --- [notifyhub] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-10T07:40:49.925Z  INFO 34057 --- [notifyhub] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1301 ms. Found 2 JPA repository interfaces.
+2026-08-10T07:40:57.374Z  INFO 34057 --- [notifyhub] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-08-10T07:40:57.494Z  INFO 34057 --- [notifyhub] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-10T07:40:57.495Z  INFO 34057 --- [notifyhub] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+2026-08-10T07:40:57.915Z  INFO 34057 --- [notifyhub] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-08-10T07:40:57.918Z  INFO 34057 --- [notifyhub] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 18491 ms
+2026-08-10T07:41:00.655Z  INFO 34057 --- [notifyhub] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-10T07:41:01.833Z  INFO 34057 --- [notifyhub] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-08-10T07:41:02.424Z  INFO 34057 --- [notifyhub] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-10T07:41:07.326Z  INFO 34057 --- [notifyhub] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-10T07:41:07.864Z  INFO 34057 --- [notifyhub] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-08-10T07:41:09.205Z  INFO 34057 --- [notifyhub] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@57f725b8
+2026-08-10T07:41:09.235Z  INFO 34057 --- [notifyhub] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-08-10T07:41:21.022Z  INFO 34057 --- [notifyhub] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    alter table if exists notification 
+       alter column payload set data type TEXT
+2026-08-10T07:41:21.663Z  INFO 34057 --- [notifyhub] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-10T07:41:25.859Z  INFO 34057 --- [notifyhub] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name appUserDetailsService
+2026-08-10T07:41:33.577Z  INFO 34057 --- [notifyhub] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-08-10T07:41:38.979Z  INFO 34057 --- [notifyhub] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-08-10T07:41:38.999Z  INFO 34057 --- [notifyhub] [           main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2026-08-10T07:41:40.055Z  INFO 34057 --- [notifyhub] [           main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#7649d350:0/SimpleConnection@48dbf9d [delegate=amqp://notifyhub@127.0.0.1:5672/, localPort=45000]
+2026-08-10T07:41:40.360Z  INFO 34057 --- [notifyhub] [           main] com.notifyhub.NotifyHubApplication       : Started NotifyHubApplication in 64.138 seconds (process running for 65.541)
+2026-08-10T07:42:45.074Z  INFO 34057 --- [notifyhub] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-10T07:42:45.075Z  INFO 34057 --- [notifyhub] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-10T07:42:45.080Z  INFO 34057 --- [notifyhub] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2026-08-10T07:42:50.050Z  INFO 34057 --- [notifyhub] [nio-8080-exec-9] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 3417 ms
+Hibernate: 
+    select
+        au1_0.id,
+        au1_0.api_key,
+        au1_0.created_at,
+        au1_0.email,
+        au1_0.password_hash,
+        au1_0.role 
+    from
+        app_user au1_0 
+    where
+        au1_0.email=?
+Hibernate: 
+    select
+        au1_0.id,
+        au1_0.api_key,
+        au1_0.created_at,
+        au1_0.email,
+        au1_0.password_hash,
+        au1_0.role 
+    from
+        app_user au1_0 
+    where
+        au1_0.email=?
+Hibernate: 
+    select
+        au1_0.id,
+        au1_0.api_key,
+        au1_0.created_at,
+        au1_0.email,
+        au1_0.password_hash,
+        au1_0.role 
+    from
+        app_user au1_0 
+    where
+        au1_0.email=?
+Hibernate: 
+    select
+        au1_0.id 
+    from
+        app_user au1_0 
+    where
+        au1_0.email=? 
+    fetch
+        first ? rows only
+Hibernate: 
+    insert 
+    into
+        app_user
+        (api_key, created_at, email, password_hash, role) 
+    values
+        (?, ?, ?, ?, ?) 
+    returning id
+Hibernate: 
+    select
+        au1_0.id,
+        au1_0.api_key,
+        au1_0.created_at,
+        au1_0.email,
+        au1_0.password_hash,
+        au1_0.role 
+    from
+        app_user au1_0 
+    where
+        au1_0.email=?
+Hibernate: 
+    select
+        au1_0.id,
+        au1_0.api_key,
+        au1_0.created_at,
+        au1_0.email,
+        au1_0.password_hash,
+        au1_0.role 
+    from
+        app_user au1_0 
+    where
+        au1_0.email=?
