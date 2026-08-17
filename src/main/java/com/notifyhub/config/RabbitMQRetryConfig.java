@@ -5,7 +5,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
@@ -16,12 +16,13 @@ public class RabbitMQRetryConfig {
     public RetryTemplate rabbitRetryTemplate() {
 
         SimpleRetryPolicy retryPolicy =
-                new SimpleRetryPolicy(3);
+                new SimpleRetryPolicy(4);
 
-        FixedBackOffPolicy backOffPolicy =
-                new FixedBackOffPolicy();
+        ExponentialBackOffPolicy backOffPolicy =
+                new ExponentialBackOffPolicy();
 
-        backOffPolicy.setBackOffPeriod(2000);
+        backOffPolicy.setInitialInterval(2000);
+        backOffPolicy.setMultiplier(2.0);
 
         RetryTemplate retryTemplate = new RetryTemplate();
 
