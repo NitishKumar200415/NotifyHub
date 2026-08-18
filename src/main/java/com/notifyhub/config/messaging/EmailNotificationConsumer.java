@@ -39,7 +39,7 @@ public class EmailNotificationConsumer {
         int retryCount = notification.getRetryCount() + 1;
         notification.setRetryCount(retryCount);
 
-        if (retryCount >= 3) {
+        if (retryCount >= 4) {
 
             notification.setStatus(NotificationStatus.FAILED);
             notificationRepository.save(notification);
