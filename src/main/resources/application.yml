@@ -23,8 +23,8 @@ spring:
   mail:
     host: sandbox.smtp.mailtrap.io
     port: 587
-    username: 6b89d750448349
-    password: 01c3cdad5ddc5555
+    username: ${MAILTRAP_USERNAME}
+    password: ${MAILTRAP_PASSWORD}
     properties:
       mail:
         smtp:
@@ -37,6 +37,14 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:notifyhub}
     password: ${RABBITMQ_PASSWORD:notifyhub123}
+
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 2000
+          multiplier: 2.0
+          max-attempts: 4
 
 management:
   endpoints:
