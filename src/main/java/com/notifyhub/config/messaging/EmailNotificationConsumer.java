@@ -39,15 +39,14 @@ public class EmailNotificationConsumer {
         int retryCount = notification.getRetryCount() + 1;
         notification.setRetryCount(retryCount);
 
+        notificationRepository.save(notification);
+
         if (retryCount >= 4) {
 
-            notification.setStatus(NotificationStatus.FAILED);
-            notificationRepository.save(notification);
-
-            return;
+            throw new RuntimeException(
+                    "Email sending failed after max retries"
+            );
         }
-
-        notificationRepository.save(notification);
 
         throw new RuntimeException("Email sending failed");
     }

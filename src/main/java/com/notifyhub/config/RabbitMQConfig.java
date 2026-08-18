@@ -11,6 +11,9 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 public class RabbitMQConfig {
 
@@ -20,8 +23,37 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public DirectExchange deadLetterExchange() {
+        return new DirectExchange("notifyhub.notification.dlx");
+    }
+
+    @Bean
     public Queue emailQueue() {
-        return new Queue("notifyhub.email.queue");
+
+        Map<String, Object> arguments = new HashMap<>();
+
+        arguments.put(
+                "x-dead-letter-exchange",
+                "notifyhub.notification.dlx"
+        );
+
+        arguments.put(
+                "x-dead-letter-routing-key",
+                "email.dlq"
+        );
+
+        return new Queue(
+                "notifyhub.email.queue",
+                true,
+                false,
+                false,
+                arguments
+        );
+    }
+
+    @Bean
+    public Queue deadLetterQueue() {
+        return new Queue("notifyhub.email.dlq");
     }
 
     @Bean
@@ -36,6 +68,17 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Binding deadLetterBinding(
+            Queue deadLetterQueue,
+            DirectExchange deadLetterExchange
+    ) {
+        return BindingBuilder
+                .bind(deadLetterQueue)
+                .to(deadLetterExchange)
+                .with("email.dlq");
+    }
+
+    @Bean
     public Jackson2JsonMessageConverter messageConverter(
             ObjectMapper objectMapper
     ) {
@@ -47,8 +90,11 @@ public class RabbitMQConfig {
             ConnectionFactory connectionFactory,
             Jackson2JsonMessageConverter messageConverter
     ) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        RabbitTemplate rabbitTemplate =
+                new RabbitTemplate(connectionFactory);
+
         rabbitTemplate.setMessageConverter(messageConverter);
+
         return rabbitTemplate;
     }
 }

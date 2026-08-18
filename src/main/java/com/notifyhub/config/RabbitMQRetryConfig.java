@@ -46,6 +46,8 @@ public class RabbitMQRetryConfig {
         factory.setMessageConverter(messageConverter);
         factory.setRetryTemplate(rabbitRetryTemplate);
 
+        factory.setDefaultRequeueRejected(false);
+
         return factory;
     }
 }
