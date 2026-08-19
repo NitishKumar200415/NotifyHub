@@ -27,6 +27,10 @@ public class RabbitMQConfig {
         return new DirectExchange("notifyhub.notification.dlx");
     }
 
+    // =========================
+    // EMAIL QUEUE
+    // =========================
+
     @Bean
     public Queue emailQueue() {
 
@@ -77,6 +81,65 @@ public class RabbitMQConfig {
                 .to(deadLetterExchange)
                 .with("email.dlq");
     }
+
+    // =========================
+    // SMS QUEUE
+    // =========================
+
+    @Bean
+    public Queue smsQueue() {
+
+        Map<String, Object> arguments = new HashMap<>();
+
+        arguments.put(
+                "x-dead-letter-exchange",
+                "notifyhub.notification.dlx"
+        );
+
+        arguments.put(
+                "x-dead-letter-routing-key",
+                "sms.dlq"
+        );
+
+        return new Queue(
+                "notifyhub.sms.queue",
+                true,
+                false,
+                false,
+                arguments
+        );
+    }
+
+    @Bean
+    public Queue smsDeadLetterQueue() {
+        return new Queue("notifyhub.sms.dlq");
+    }
+
+    @Bean
+    public Binding smsBinding(
+            Queue smsQueue,
+            DirectExchange notificationExchange
+    ) {
+        return BindingBuilder
+                .bind(smsQueue)
+                .to(notificationExchange)
+                .with("sms");
+    }
+
+    @Bean
+    public Binding smsDeadLetterBinding(
+            Queue smsDeadLetterQueue,
+            DirectExchange deadLetterExchange
+    ) {
+        return BindingBuilder
+                .bind(smsDeadLetterQueue)
+                .to(deadLetterExchange)
+                .with("sms.dlq");
+    }
+
+    // =========================
+    // JSON MESSAGE CONVERTER
+    // =========================
 
     @Bean
     public Jackson2JsonMessageConverter messageConverter(

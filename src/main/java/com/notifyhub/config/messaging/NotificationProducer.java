@@ -13,9 +13,12 @@ public class NotificationProducer {
     }
 
     public void publish(NotificationEvent event) {
+
+        String routingKey = event.channel().toLowerCase();
+
         rabbitTemplate.convertAndSend(
                 "notifyhub.notification.exchange",
-                "email",
+                routingKey,
                 event
         );
     }

@@ -55,7 +55,10 @@ management:
   endpoint:
     health:
       show-details: always
-
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID}
+  auth-token: ${TWILIO_AUTH_TOKEN}
+  phone-number: ${TWILIO_PHONE_NUMBER}
 jwt:
   secret: ${JWT_SECRET:dev-only-secret-CHANGE-ME-this-must-be-at-least-256-bits-long-for-HS256}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
