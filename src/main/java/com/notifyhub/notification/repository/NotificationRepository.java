@@ -9,8 +9,16 @@ import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    Optional<Notification> findByIdAndRecipientUser(Long id, AppUser recipientUser);
+    Optional<Notification> findByIdAndRecipientUser(
+            Long id,
+            AppUser recipientUser
+    );
 
-    List<Notification> findByRecipientUserOrderByCreatedAtDesc(AppUser recipientUser);
+    List<Notification> findByRecipientUserOrderByCreatedAtDesc(
+            AppUser recipientUser
+    );
 
+    Optional<Notification> findByIdempotencyKey(
+            String idempotencyKey
+    );
 }

@@ -36,6 +36,23 @@ public class NotificationService {
             SendNotificationRequest request
     ) {
 
+        if (request.getIdempotencyKey() != null
+                && !request.getIdempotencyKey().isBlank()) {
+
+            return notificationRepository
+                    .findByIdempotencyKey(request.getIdempotencyKey())
+                    .map(NotificationResponse::from)
+                    .orElseGet(() -> createAndSend(appUser, request));
+        }
+
+        return createAndSend(appUser, request);
+    }
+
+    private NotificationResponse createAndSend(
+            AppUser appUser,
+            SendNotificationRequest request
+    ) {
+
         validateRecipient(
                 request.getRecipientAddress(),
                 request.getChannel()
@@ -144,7 +161,9 @@ public class NotificationService {
         return NotificationResponse.from(notification);
     }
 
-    public List<NotificationResponse> getAll(AppUser appUser) {
+    public List<NotificationResponse> getAll(
+            AppUser appUser
+    ) {
 
         return notificationRepository
                 .findByRecipientUserOrderByCreatedAtDesc(appUser)
