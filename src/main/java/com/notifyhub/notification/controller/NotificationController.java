@@ -4,16 +4,15 @@ import com.notifyhub.auth.AppUserDetails;
 import com.notifyhub.notification.dto.NotificationResponse;
 import com.notifyhub.notification.dto.SendNotificationRequest;
 import com.notifyhub.notification.service.NotificationService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import java.util.List;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -21,8 +20,8 @@ import java.net.URI;
 @SecurityRequirement(name = "bearerAuth")
 public class NotificationController {
 
-
     private final NotificationService notificationService;
+
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getAll(
             @AuthenticationPrincipal AppUserDetails userDetails) {
@@ -37,7 +36,11 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<NotificationResponse> send(
             @AuthenticationPrincipal AppUserDetails userDetails,
+            @RequestHeader(value = "Idempotency-Key", required = false)
+            String idempotencyKey,
             @Valid @RequestBody SendNotificationRequest request) {
+
+        request.setIdempotencyKey(idempotencyKey);
 
         NotificationResponse response = notificationService.send(
                 userDetails.getAppUser(),
@@ -48,6 +51,7 @@ public class NotificationController {
                 .created(URI.create("/api/notifications/" + response.getId()))
                 .body(response);
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<NotificationResponse> getById(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -60,5 +64,4 @@ public class NotificationController {
                 )
         );
     }
-
 }
