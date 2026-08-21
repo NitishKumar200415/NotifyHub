@@ -1,7 +1,6 @@
 package com.notifyhub.notification.dto;
 
 import com.notifyhub.notification.entity.NotificationChannel;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,7 +15,6 @@ import lombok.Setter;
 public class SendNotificationRequest {
 
     @NotBlank(message = "Recipient address is required")
-    @Email(message = "Recipient address must be a valid email")
     private String recipientAddress;
 
     @NotNull(message = "Channel is required")

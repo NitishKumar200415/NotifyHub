@@ -31,8 +31,15 @@ public class NotificationService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public NotificationResponse send(AppUser appUser,
-                                     SendNotificationRequest request) {
+    public NotificationResponse send(
+            AppUser appUser,
+            SendNotificationRequest request
+    ) {
+
+        validateRecipient(
+                request.getRecipientAddress(),
+                request.getChannel()
+        );
 
         String payload = request.getPayload();
 
@@ -98,7 +105,37 @@ public class NotificationService {
         return NotificationResponse.from(savedNotification);
     }
 
-    public NotificationResponse getById(AppUser appUser, Long id) {
+    private void validateRecipient(
+            String recipientAddress,
+            NotificationChannel channel
+    ) {
+
+        if (channel == NotificationChannel.EMAIL) {
+
+            if (!recipientAddress.matches(
+                    "^[A-Za-z0-9+_.-]+@(.+)$"
+            )) {
+                throw new IllegalArgumentException(
+                        "Recipient address must be a valid email"
+                );
+            }
+
+        } else if (channel == NotificationChannel.SMS) {
+
+            if (!recipientAddress.matches(
+                    "^\\+[1-9]\\d{7,14}$"
+            )) {
+                throw new IllegalArgumentException(
+                        "Recipient address must be a valid phone number in E.164 format"
+                );
+            }
+        }
+    }
+
+    public NotificationResponse getById(
+            AppUser appUser,
+            Long id
+    ) {
 
         Notification notification = notificationRepository
                 .findByIdAndRecipientUser(id, appUser)
