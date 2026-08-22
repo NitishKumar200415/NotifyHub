@@ -12,6 +12,7 @@ import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.messaging.NotificationEvent;
 import com.notifyhub.notification.messaging.NotificationProducer;
 import com.notifyhub.notification.repository.NotificationRepository;
+import com.notifyhub.preference.NotificationPreferenceService;
 import com.notifyhub.template.service.TemplateService;
 import com.notifyhub.user.AppUser;
 import jakarta.transaction.Transactional;
@@ -29,6 +30,7 @@ public class NotificationService {
     private final NotificationProducer notificationProducer;
     private final TemplateService templateService;
     private final ObjectMapper objectMapper;
+    private final NotificationPreferenceService preferenceService;
 
     @Transactional
     public NotificationResponse send(
@@ -93,6 +95,11 @@ public class NotificationService {
             }
         }
 
+        boolean enabled = preferenceService.isEnabled(
+                appUser,
+                request.getChannel()
+        );
+
         Notification notification = Notification.builder()
                 .recipientUser(appUser)
                 .recipientAddress(request.getRecipientAddress())
@@ -100,15 +107,20 @@ public class NotificationService {
                 .templateCode(request.getTemplateCode())
                 .payload(payload)
                 .idempotencyKey(request.getIdempotencyKey())
-                .status(NotificationStatus.QUEUED)
+                .status(
+                        enabled
+                                ? NotificationStatus.QUEUED
+                                : NotificationStatus.SKIPPED
+                )
                 .retryCount(0)
                 .build();
 
         Notification savedNotification =
                 notificationRepository.save(notification);
 
-        if (savedNotification.getChannel() == NotificationChannel.EMAIL
-                || savedNotification.getChannel() == NotificationChannel.SMS) {
+        if (enabled
+                && (savedNotification.getChannel() == NotificationChannel.EMAIL
+                || savedNotification.getChannel() == NotificationChannel.SMS)) {
 
             NotificationEvent event = new NotificationEvent(
                     savedNotification.getId(),

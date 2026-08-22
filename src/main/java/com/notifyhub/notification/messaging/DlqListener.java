@@ -15,7 +15,10 @@ public class DlqListener {
 
     private final NotificationRepository notificationRepository;
 
-    @RabbitListener(queues = "notifyhub.email.dlq")
+    @RabbitListener(queues = {
+            "notifyhub.email.dlq",
+            "notifyhub.sms.dlq"
+    })
     public void consume(NotificationEvent event) {
 
         Notification notification = notificationRepository
