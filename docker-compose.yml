@@ -30,6 +30,16 @@ services:
     volumes:
       - notifyhub_rabbitmqdata:/var/lib/rabbitmq
 
+  redis:
+    image: redis:7-alpine
+    container_name: notifyhub-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - notifyhub_redisdata:/data
+
 volumes:
   notifyhub_pgdata:
   notifyhub_rabbitmqdata:
+  notifyhub_redisdata:

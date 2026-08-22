@@ -2,6 +2,7 @@ package com.notifyhub.config;
 
 
 import com.notifyhub.auth.JwtAuthenticationFilter;
+import com.notifyhub.ratelimit.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -50,6 +52,10 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterAfter(
+                        rateLimitingFilter,
+                        JwtAuthenticationFilter.class
                 );
 
         return http.build();

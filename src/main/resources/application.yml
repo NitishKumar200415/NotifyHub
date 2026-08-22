@@ -11,6 +11,11 @@ spring:
     password: notifyhub
     driver-class-name: org.postgresql.Driver
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+
   jpa:
     hibernate:
       ddl-auto: update
