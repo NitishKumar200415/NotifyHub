@@ -17,9 +17,13 @@ import com.notifyhub.template.service.TemplateService;
 import com.notifyhub.user.AppUser;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -173,14 +177,54 @@ public class NotificationService {
         return NotificationResponse.from(notification);
     }
 
-    public List<NotificationResponse> getAll(
-            AppUser appUser
+    public Page<NotificationResponse> getAll(
+            AppUser appUser,
+            int page,
+            int size,
+            NotificationStatus status,
+            NotificationChannel channel
     ) {
 
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
+        /*
+         * Every query is restricted to the currently logged-in user.
+         * Additional filters for status and channel are added only
+         * when they are provided in the request.
+         */
+        Specification<Notification> specification =
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.equal(
+                                root.get("recipientUser"),
+                                appUser
+                        );
+
+        if (status != null) {
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(
+                                    root.get("status"),
+                                    status
+                            )
+            );
+        }
+
+        if (channel != null) {
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(
+                                    root.get("channel"),
+                                    channel
+                            )
+            );
+        }
+
         return notificationRepository
-                .findByRecipientUserOrderByCreatedAtDesc(appUser)
-                .stream()
-                .map(NotificationResponse::from)
-                .toList();
+                .findAll(specification, pageable)
+                .map(NotificationResponse::from);
     }
 }

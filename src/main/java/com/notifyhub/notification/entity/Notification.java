@@ -7,7 +7,36 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "notification")
+@Table(
+        name = "notification",
+        indexes = {
+
+                // Used when fetching all notifications for a user,
+                // ordered by newest notification first.
+                @Index(
+                        name = "idx_notification_user_created_at",
+                        columnList = "recipient_user_id, created_at"
+                ),
+
+                // Used when filtering notifications by user + status.
+                @Index(
+                        name = "idx_notification_user_status",
+                        columnList = "recipient_user_id, status"
+                ),
+
+                // Used when filtering notifications by user + channel.
+                @Index(
+                        name = "idx_notification_user_channel",
+                        columnList = "recipient_user_id, channel"
+                ),
+
+                // Used when filtering notifications by user + status + channel.
+                @Index(
+                        name = "idx_notification_user_status_channel",
+                        columnList = "recipient_user_id, status, channel"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

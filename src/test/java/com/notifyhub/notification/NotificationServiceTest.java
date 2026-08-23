@@ -1,20 +1,27 @@
 package com.notifyhub.notification;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.notifyhub.exception.NotificationNotFoundException;
 import com.notifyhub.notification.dto.NotificationResponse;
 import com.notifyhub.notification.dto.SendNotificationRequest;
 import com.notifyhub.notification.entity.Notification;
 import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
+import com.notifyhub.notification.messaging.NotificationProducer;
 import com.notifyhub.notification.repository.NotificationRepository;
-import com.notifyhub.notification.service.EmailSenderService;
 import com.notifyhub.notification.service.NotificationService;
+import com.notifyhub.preference.NotificationPreferenceService;
+import com.notifyhub.template.service.TemplateService;
 import com.notifyhub.user.AppUser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
 import java.util.List;
@@ -31,117 +38,146 @@ class NotificationServiceTest {
     private NotificationRepository notificationRepository;
 
     @Mock
-    private EmailSenderService emailSenderService;
+    private NotificationProducer notificationProducer;
+
+    @Mock
+    private TemplateService templateService;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private NotificationPreferenceService preferenceService;
 
     @InjectMocks
     private NotificationService notificationService;
 
+
     @Test
-    void send_ShouldCreateNotificationSuccessfully() {
+    void send_ShouldCreateAndQueueNotificationSuccessfully() {
 
         AppUser user = AppUser.builder()
                 .id(1L)
                 .email("test@example.com")
                 .build();
 
-        SendNotificationRequest request = new SendNotificationRequest();
+        SendNotificationRequest request =
+                new SendNotificationRequest();
+
         request.setRecipientAddress("john@example.com");
         request.setChannel(NotificationChannel.EMAIL);
-        request.setTemplateCode("WELCOME");
-        request.setPayload("{\"name\":\"John\"}");
+        request.setPayload("Hello John");
         request.setIdempotencyKey("abc-123");
 
-        Notification notification = Notification.builder()
-                .id(1L)
-                .recipientUser(user)
-                .recipientAddress(request.getRecipientAddress())
-                .channel(request.getChannel())
-                .templateCode(request.getTemplateCode())
-                .payload(request.getPayload())
-                .idempotencyKey(request.getIdempotencyKey())
-                .status(NotificationStatus.QUEUED)
-                .retryCount(0)
-                .createdAt(Instant.now())
-                .build();
-
-        when(notificationRepository.save(any(Notification.class)))
-                .thenReturn(notification);
-
-        when(emailSenderService.sendEmail(
-                anyString(),
-                anyString(),
-                anyString()
+        when(preferenceService.isEnabled(
+                user,
+                NotificationChannel.EMAIL
         )).thenReturn(true);
+
+        Notification savedNotification =
+                Notification.builder()
+                        .id(1L)
+                        .recipientUser(user)
+                        .recipientAddress(
+                                request.getRecipientAddress()
+                        )
+                        .channel(request.getChannel())
+                        .payload(request.getPayload())
+                        .idempotencyKey(
+                                request.getIdempotencyKey()
+                        )
+                        .status(NotificationStatus.QUEUED)
+                        .retryCount(0)
+                        .createdAt(Instant.now())
+                        .build();
+
+        when(notificationRepository.save(
+                any(Notification.class)
+        )).thenReturn(savedNotification);
 
         NotificationResponse response =
                 notificationService.send(user, request);
 
         assertNotNull(response);
-        assertEquals(1L, response.getId());
-        assertEquals(NotificationStatus.SENT, response.getStatus());
-        assertEquals("john@example.com", response.getRecipientAddress());
 
-        verify(notificationRepository, times(2))
+        assertEquals(
+                1L,
+                response.getId()
+        );
+
+        assertEquals(
+                NotificationStatus.QUEUED,
+                response.getStatus()
+        );
+
+        assertEquals(
+                "john@example.com",
+                response.getRecipientAddress()
+        );
+
+        verify(notificationRepository)
                 .save(any(Notification.class));
 
-        verify(emailSenderService).sendEmail(
-                anyString(),
-                anyString(),
-                anyString()
-        );
+        verify(notificationProducer)
+                .publish(any());
+
+        verifyNoInteractions(templateService);
     }
 
+
     @Test
-    void send_ShouldMarkNotificationAsFailed_WhenEmailSendingFails() {
+    void send_ShouldMarkNotificationAsSkipped_WhenPreferenceDisabled() {
 
         AppUser user = AppUser.builder()
                 .id(1L)
                 .email("test@example.com")
                 .build();
 
-        SendNotificationRequest request = new SendNotificationRequest();
+        SendNotificationRequest request =
+                new SendNotificationRequest();
+
         request.setRecipientAddress("john@example.com");
         request.setChannel(NotificationChannel.EMAIL);
-        request.setTemplateCode("WELCOME");
-        request.setPayload("{\"name\":\"John\"}");
-        request.setIdempotencyKey("abc-123");
+        request.setPayload("Hello John");
 
-        Notification notification = Notification.builder()
-                .id(1L)
-                .recipientUser(user)
-                .recipientAddress(request.getRecipientAddress())
-                .channel(request.getChannel())
-                .templateCode(request.getTemplateCode())
-                .payload(request.getPayload())
-                .idempotencyKey(request.getIdempotencyKey())
-                .status(NotificationStatus.QUEUED)
-                .retryCount(0)
-                .createdAt(Instant.now())
-                .build();
-
-        when(notificationRepository.save(any(Notification.class)))
-                .thenReturn(notification);
-
-        when(emailSenderService.sendEmail(
-                anyString(),
-                anyString(),
-                anyString()
+        when(preferenceService.isEnabled(
+                user,
+                NotificationChannel.EMAIL
         )).thenReturn(false);
+
+        Notification skippedNotification =
+                Notification.builder()
+                        .id(1L)
+                        .recipientUser(user)
+                        .recipientAddress(
+                                request.getRecipientAddress()
+                        )
+                        .channel(request.getChannel())
+                        .payload(request.getPayload())
+                        .status(NotificationStatus.SKIPPED)
+                        .retryCount(0)
+                        .createdAt(Instant.now())
+                        .build();
+
+        when(notificationRepository.save(
+                any(Notification.class)
+        )).thenReturn(skippedNotification);
 
         NotificationResponse response =
                 notificationService.send(user, request);
 
-        assertEquals(NotificationStatus.FAILED, response.getStatus());
+        assertEquals(
+                NotificationStatus.SKIPPED,
+                response.getStatus()
+        );
 
-        verify(notificationRepository, times(2))
+        verify(notificationRepository)
                 .save(any(Notification.class));
 
-        verify(emailSenderService).sendEmail(
-                anyString(),
-                anyString(),
-                anyString()
-        );
+        verify(notificationProducer, never())
+                .publish(any());
     }
+
 
     @Test
     void getById_ShouldReturnNotification() {
@@ -150,24 +186,35 @@ class NotificationServiceTest {
                 .id(1L)
                 .build();
 
-        Notification notification = Notification.builder()
-                .id(1L)
-                .recipientUser(user)
-                .recipientAddress("john@example.com")
-                .channel(NotificationChannel.EMAIL)
-                .status(NotificationStatus.SENT)
-                .createdAt(Instant.now())
-                .build();
+        Notification notification =
+                Notification.builder()
+                        .id(1L)
+                        .recipientUser(user)
+                        .recipientAddress("john@example.com")
+                        .channel(NotificationChannel.EMAIL)
+                        .status(NotificationStatus.SENT)
+                        .createdAt(Instant.now())
+                        .build();
 
-        when(notificationRepository.findByIdAndRecipientUser(1L, user))
-                .thenReturn(Optional.of(notification));
+        when(notificationRepository.findByIdAndRecipientUser(
+                1L,
+                user
+        )).thenReturn(Optional.of(notification));
 
         NotificationResponse response =
                 notificationService.getById(user, 1L);
 
-        assertEquals(1L, response.getId());
-        assertEquals(NotificationStatus.SENT, response.getStatus());
+        assertEquals(
+                1L,
+                response.getId()
+        );
+
+        assertEquals(
+                NotificationStatus.SENT,
+                response.getStatus()
+        );
     }
+
 
     @Test
     void getById_ShouldThrowException_WhenNotificationNotFound() {
@@ -176,14 +223,20 @@ class NotificationServiceTest {
                 .id(1L)
                 .build();
 
-        when(notificationRepository.findByIdAndRecipientUser(99L, user))
-                .thenReturn(Optional.empty());
+        when(notificationRepository.findByIdAndRecipientUser(
+                99L,
+                user
+        )).thenReturn(Optional.empty());
 
         assertThrows(
                 NotificationNotFoundException.class,
-                () -> notificationService.getById(user, 99L)
+                () -> notificationService.getById(
+                        user,
+                        99L
+                )
         );
     }
+
 
     @Test
     void getAll_ShouldReturnNotifications() {
@@ -192,23 +245,45 @@ class NotificationServiceTest {
                 .id(1L)
                 .build();
 
-        Notification notification = Notification.builder()
-                .id(1L)
-                .recipientUser(user)
-                .recipientAddress("john@example.com")
-                .channel(NotificationChannel.EMAIL)
-                .status(NotificationStatus.SENT)
-                .createdAt(Instant.now())
-                .build();
+        Notification notification =
+                Notification.builder()
+                        .id(1L)
+                        .recipientUser(user)
+                        .recipientAddress("john@example.com")
+                        .channel(NotificationChannel.EMAIL)
+                        .status(NotificationStatus.SENT)
+                        .createdAt(Instant.now())
+                        .build();
 
-        when(notificationRepository.findByRecipientUserOrderByCreatedAtDesc(user))
-                .thenReturn(List.of(notification));
+        Page<Notification> notificationPage =
+                new PageImpl<>(
+                        List.of(notification)
+                );
 
-        List<NotificationResponse> responses =
-                notificationService.getAll(user);
+        when(notificationRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(notificationPage);
 
-        assertEquals(1, responses.size());
-        assertEquals("john@example.com",
-                responses.get(0).getRecipientAddress());
+        Page<NotificationResponse> responses =
+                notificationService.getAll(
+                        user,
+                        0,
+                        10,
+                        null,
+                        null
+                );
+
+        assertEquals(
+                1,
+                responses.getContent().size()
+        );
+
+        assertEquals(
+                "john@example.com",
+                responses.getContent()
+                        .get(0)
+                        .getRecipientAddress()
+        );
     }
 }
