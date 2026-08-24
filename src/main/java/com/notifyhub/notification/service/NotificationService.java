@@ -1,5 +1,6 @@
 package com.notifyhub.notification.service;
 
+import com.notifyhub.notification.dto.NotificationStatsResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -226,5 +227,49 @@ public class NotificationService {
         return notificationRepository
                 .findAll(specification, pageable)
                 .map(NotificationResponse::from);
+    }
+    public NotificationStatsResponse getStats(AppUser appUser) {
+
+        long total = notificationRepository
+                .countByRecipientUser(appUser);
+
+        long queued = notificationRepository
+                .countByRecipientUserAndStatus(
+                        appUser,
+                        NotificationStatus.QUEUED
+                );
+
+        long sent = notificationRepository
+                .countByRecipientUserAndStatus(
+                        appUser,
+                        NotificationStatus.SENT
+                );
+
+        long failed = notificationRepository
+                .countByRecipientUserAndStatus(
+                        appUser,
+                        NotificationStatus.FAILED
+                );
+
+        long deadLettered = notificationRepository
+                .countByRecipientUserAndStatus(
+                        appUser,
+                        NotificationStatus.DEAD_LETTERED
+                );
+
+        long skipped = notificationRepository
+                .countByRecipientUserAndStatus(
+                        appUser,
+                        NotificationStatus.SKIPPED
+                );
+
+        return new NotificationStatsResponse(
+                total,
+                queued,
+                sent,
+                failed,
+                deadLettered,
+                skipped
+        );
     }
 }

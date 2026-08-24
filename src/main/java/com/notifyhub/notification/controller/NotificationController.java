@@ -2,6 +2,7 @@ package com.notifyhub.notification.controller;
 
 import com.notifyhub.auth.AppUserDetails;
 import com.notifyhub.notification.dto.NotificationResponse;
+import com.notifyhub.notification.dto.NotificationStatsResponse;
 import com.notifyhub.notification.dto.SendNotificationRequest;
 import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
@@ -27,19 +28,10 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getAll(
             @AuthenticationPrincipal AppUserDetails userDetails,
-
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "10")
-            int size,
-
-            @RequestParam(required = false)
-            NotificationStatus status,
-
-            @RequestParam(required = false)
-            NotificationChannel channel
-    ) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) NotificationStatus status,
+            @RequestParam(required = false) NotificationChannel channel) {
 
         return ResponseEntity.ok(
                 notificationService.getAll(
@@ -55,10 +47,11 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<NotificationResponse> send(
             @AuthenticationPrincipal AppUserDetails userDetails,
-            @RequestHeader(value = "Idempotency-Key", required = false)
-            String idempotencyKey,
-            @Valid @RequestBody SendNotificationRequest request
-    ) {
+            @RequestHeader(
+                    value = "Idempotency-Key",
+                    required = false
+            ) String idempotencyKey,
+            @Valid @RequestBody SendNotificationRequest request) {
 
         request.setIdempotencyKey(idempotencyKey);
 
@@ -68,15 +61,36 @@ public class NotificationController {
         );
 
         return ResponseEntity
-                .created(URI.create("/api/notifications/" + response.getId()))
+                .created(
+                        URI.create(
+                                "/api/notifications/" + response.getId()
+                        )
+                )
                 .body(response);
+    }
+
+    /*
+     * IMPORTANT:
+     * This mapping must be placed before "/{id}".
+     *
+     * Otherwise Spring may try to interpret "stats"
+     * as the notification ID.
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<NotificationStatsResponse> getStats(
+            @AuthenticationPrincipal AppUserDetails userDetails) {
+
+        return ResponseEntity.ok(
+                notificationService.getStats(
+                        userDetails.getAppUser()
+                )
+        );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<NotificationResponse> getById(
             @AuthenticationPrincipal AppUserDetails userDetails,
-            @PathVariable Long id
-    ) {
+            @PathVariable Long id) {
 
         return ResponseEntity.ok(
                 notificationService.getById(
