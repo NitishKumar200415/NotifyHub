@@ -17,7 +17,8 @@ public class DlqListener {
 
     @RabbitListener(queues = {
             "notifyhub.email.dlq",
-            "notifyhub.sms.dlq"
+            "notifyhub.sms.dlq",
+            "notifyhub.push.dlq"
     })
     public void consume(NotificationEvent event) {
 
@@ -25,7 +26,10 @@ public class DlqListener {
                 .findById(event.notificationId())
                 .orElseThrow();
 
-        notification.setStatus(NotificationStatus.DEAD_LETTERED);
+        notification.setStatus(
+                NotificationStatus.DEAD_LETTERED
+        );
+
         notificationRepository.save(notification);
 
         log.error(

@@ -25,6 +25,14 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    /*
+     * Get notification history.
+     *
+     * Supports:
+     * - Pagination
+     * - Status filtering
+     * - Channel filtering
+     */
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getAll(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -44,6 +52,9 @@ public class NotificationController {
         );
     }
 
+    /*
+     * Create and send a new notification.
+     */
     @PostMapping
     public ResponseEntity<NotificationResponse> send(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -70,11 +81,10 @@ public class NotificationController {
     }
 
     /*
-     * IMPORTANT:
-     * This mapping must be placed before "/{id}".
+     * Get notification statistics for the currently logged-in user.
      *
-     * Otherwise Spring may try to interpret "stats"
-     * as the notification ID.
+     * Example:
+     * GET /api/notifications/stats
      */
     @GetMapping("/stats")
     public ResponseEntity<NotificationStatsResponse> getStats(
@@ -87,6 +97,34 @@ public class NotificationController {
         );
     }
 
+    /*
+     * Manually retry a notification.
+     *
+     * Only notifications with FAILED or DEAD_LETTERED
+     * status should be allowed to retry.
+     *
+     * Example:
+     * POST /api/notifications/123/retry
+     */
+    @PostMapping("/{id}/retry")
+    public ResponseEntity<NotificationResponse> retry(
+            @AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                notificationService.retry(
+                        userDetails.getAppUser(),
+                        id
+                )
+        );
+    }
+
+    /*
+     * Get a specific notification.
+     *
+     * This endpoint is placed after fixed paths such as
+     * "/stats" to avoid Spring interpreting "stats" as an ID.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<NotificationResponse> getById(
             @AuthenticationPrincipal AppUserDetails userDetails,

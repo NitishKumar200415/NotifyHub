@@ -19,17 +19,22 @@ public class RabbitMQConfig {
 
     @Bean
     public DirectExchange notificationExchange() {
-        return new DirectExchange("notifyhub.notification.exchange");
+        return new DirectExchange(
+                "notifyhub.notification.exchange"
+        );
     }
 
     @Bean
     public DirectExchange deadLetterExchange() {
-        return new DirectExchange("notifyhub.notification.dlx");
+        return new DirectExchange(
+                "notifyhub.notification.dlx"
+        );
     }
 
-    // =========================
+
+    // =========================================================
     // EMAIL QUEUE
-    // =========================
+    // =========================================================
 
     @Bean
     public Queue emailQueue() {
@@ -65,6 +70,7 @@ public class RabbitMQConfig {
             Queue emailQueue,
             DirectExchange notificationExchange
     ) {
+
         return BindingBuilder
                 .bind(emailQueue)
                 .to(notificationExchange)
@@ -76,15 +82,17 @@ public class RabbitMQConfig {
             Queue deadLetterQueue,
             DirectExchange deadLetterExchange
     ) {
+
         return BindingBuilder
                 .bind(deadLetterQueue)
                 .to(deadLetterExchange)
                 .with("email.dlq");
     }
 
-    // =========================
+
+    // =========================================================
     // SMS QUEUE
-    // =========================
+    // =========================================================
 
     @Bean
     public Queue smsQueue() {
@@ -120,6 +128,7 @@ public class RabbitMQConfig {
             Queue smsQueue,
             DirectExchange notificationExchange
     ) {
+
         return BindingBuilder
                 .bind(smsQueue)
                 .to(notificationExchange)
@@ -131,21 +140,84 @@ public class RabbitMQConfig {
             Queue smsDeadLetterQueue,
             DirectExchange deadLetterExchange
     ) {
+
         return BindingBuilder
                 .bind(smsDeadLetterQueue)
                 .to(deadLetterExchange)
                 .with("sms.dlq");
     }
 
-    // =========================
+
+    // =========================================================
+    // PUSH QUEUE
+    // =========================================================
+
+    @Bean
+    public Queue pushQueue() {
+
+        Map<String, Object> arguments = new HashMap<>();
+
+        arguments.put(
+                "x-dead-letter-exchange",
+                "notifyhub.notification.dlx"
+        );
+
+        arguments.put(
+                "x-dead-letter-routing-key",
+                "push.dlq"
+        );
+
+        return new Queue(
+                "notifyhub.push.queue",
+                true,
+                false,
+                false,
+                arguments
+        );
+    }
+
+    @Bean
+    public Queue pushDeadLetterQueue() {
+        return new Queue("notifyhub.push.dlq");
+    }
+
+    @Bean
+    public Binding pushBinding(
+            Queue pushQueue,
+            DirectExchange notificationExchange
+    ) {
+
+        return BindingBuilder
+                .bind(pushQueue)
+                .to(notificationExchange)
+                .with("push");
+    }
+
+    @Bean
+    public Binding pushDeadLetterBinding(
+            Queue pushDeadLetterQueue,
+            DirectExchange deadLetterExchange
+    ) {
+
+        return BindingBuilder
+                .bind(pushDeadLetterQueue)
+                .to(deadLetterExchange)
+                .with("push.dlq");
+    }
+
+
+    // =========================================================
     // JSON MESSAGE CONVERTER
-    // =========================
+    // =========================================================
 
     @Bean
     public Jackson2JsonMessageConverter messageConverter(
             ObjectMapper objectMapper
     ) {
-        return new Jackson2JsonMessageConverter(objectMapper);
+
+        return new Jackson2JsonMessageConverter(
+                objectMapper
+        );
     }
 
     @Bean
@@ -153,10 +225,13 @@ public class RabbitMQConfig {
             ConnectionFactory connectionFactory,
             Jackson2JsonMessageConverter messageConverter
     ) {
+
         RabbitTemplate rabbitTemplate =
                 new RabbitTemplate(connectionFactory);
 
-        rabbitTemplate.setMessageConverter(messageConverter);
+        rabbitTemplate.setMessageConverter(
+                messageConverter
+        );
 
         return rabbitTemplate;
     }
