@@ -12,6 +12,7 @@ import com.notifyhub.preference.NotificationPreferenceRepository;
 import com.notifyhub.user.AppUser;
 import com.notifyhub.user.AppUserRepository;
 import com.notifyhub.user.UserRole;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,21 @@ class NotificationIntegrationTest extends IntegrationTest {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+
+    // =========================================================
+    // TEST SETUP
+    // =========================================================
+
+    @BeforeEach
+    void clearEmailQueue() {
+
+        while (rabbitTemplate.receiveAndConvert(
+                "notifyhub.email.queue"
+        ) != null) {
+            // Keep consuming messages until the queue is empty.
+        }
+    }
 
 
     // =========================================================
@@ -278,8 +294,10 @@ class NotificationIntegrationTest extends IntegrationTest {
                 .isEqualTo(NotificationStatus.SKIPPED);
 
         /*
-         * Verify that no message was published
-         * to the EMAIL RabbitMQ queue.
+         * The queue was cleared before this test.
+         *
+         * Therefore, if this notification was incorrectly
+         * published, we would receive a message here.
          */
         Object message =
                 rabbitTemplate.receiveAndConvert(

@@ -25,6 +25,10 @@ class NotificationPreferenceIntegrationTest extends IntegrationTest {
     private AppUserRepository appUserRepository;
 
 
+    // =========================================================
+    // DEFAULT PREFERENCES TEST
+    // =========================================================
+
     @Test
     void shouldReturnAllChannelsEnabledByDefault() {
 
@@ -34,7 +38,8 @@ class NotificationPreferenceIntegrationTest extends IntegrationTest {
                 .role(UserRole.CLIENT)
                 .build();
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                appUserRepository.save(user);
 
         List<NotificationPreferenceResponse> preferences =
                 preferenceService.getPreferences(savedUser);
@@ -47,6 +52,10 @@ class NotificationPreferenceIntegrationTest extends IntegrationTest {
     }
 
 
+    // =========================================================
+    // DISABLE CHANNEL TEST
+    // =========================================================
+
     @Test
     void shouldDisableNotificationChannel() {
 
@@ -56,7 +65,8 @@ class NotificationPreferenceIntegrationTest extends IntegrationTest {
                 .role(UserRole.CLIENT)
                 .build();
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                appUserRepository.save(user);
 
         NotificationPreferenceResponse response =
                 preferenceService.updatePreference(
@@ -89,11 +99,20 @@ class NotificationPreferenceIntegrationTest extends IntegrationTest {
                         NotificationChannel.PUSH
                 );
 
-        assertThat(emailEnabled).isFalse();
-        assertThat(smsEnabled).isTrue();
-        assertThat(pushEnabled).isTrue();
+        assertThat(emailEnabled)
+                .isFalse();
+
+        assertThat(smsEnabled)
+                .isTrue();
+
+        assertThat(pushEnabled)
+                .isTrue();
     }
 
+
+    // =========================================================
+    // UPDATE EXISTING PREFERENCE TEST
+    // =========================================================
 
     @Test
     void shouldUpdateExistingPreferenceInsteadOfCreatingDuplicate() {
@@ -104,7 +123,8 @@ class NotificationPreferenceIntegrationTest extends IntegrationTest {
                 .role(UserRole.CLIENT)
                 .build();
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                appUserRepository.save(user);
 
         preferenceService.updatePreference(
                 savedUser,
