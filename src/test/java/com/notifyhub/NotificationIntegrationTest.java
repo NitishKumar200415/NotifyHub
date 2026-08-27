@@ -7,11 +7,12 @@ import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.repository.NotificationRepository;
 import com.notifyhub.notification.service.NotificationService;
+import com.notifyhub.preference.NotificationPreference;
+import com.notifyhub.preference.NotificationPreferenceRepository;
 import com.notifyhub.user.AppUser;
 import com.notifyhub.user.AppUserRepository;
 import com.notifyhub.user.UserRole;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,13 +27,18 @@ class NotificationIntegrationTest extends IntegrationTest {
     private NotificationRepository notificationRepository;
 
     @Autowired
+    private NotificationPreferenceRepository preferenceRepository;
+
+    @Autowired
     private AppUserRepository appUserRepository;
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    @Autowired
-    private Queue emailQueue;
+
+    // =========================================================
+    // POSTGRESQL INTEGRATION TEST
+    // =========================================================
 
     @Test
     void shouldSaveAndRetrieveNotification() {
@@ -43,21 +49,26 @@ class NotificationIntegrationTest extends IntegrationTest {
                 .role(UserRole.CLIENT)
                 .build();
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                appUserRepository.save(user);
 
-        Notification notification = Notification.builder()
-                .recipientUser(savedUser)
-                .recipientAddress("integration@test.com")
-                .channel(NotificationChannel.EMAIL)
-                .payload("Testing PostgreSQL with Testcontainers")
-                .status(NotificationStatus.QUEUED)
-                .retryCount(0)
-                .build();
+        Notification notification =
+                Notification.builder()
+                        .recipientUser(savedUser)
+                        .recipientAddress("integration@test.com")
+                        .channel(NotificationChannel.EMAIL)
+                        .payload(
+                                "Testing PostgreSQL with Testcontainers"
+                        )
+                        .status(NotificationStatus.QUEUED)
+                        .retryCount(0)
+                        .build();
 
         Notification savedNotification =
                 notificationRepository.save(notification);
 
-        assertThat(savedNotification.getId()).isNotNull();
+        assertThat(savedNotification.getId())
+                .isNotNull();
 
         Notification retrievedNotification =
                 notificationRepository
@@ -65,7 +76,9 @@ class NotificationIntegrationTest extends IntegrationTest {
                         .orElseThrow();
 
         assertThat(retrievedNotification.getPayload())
-                .isEqualTo("Testing PostgreSQL with Testcontainers");
+                .isEqualTo(
+                        "Testing PostgreSQL with Testcontainers"
+                );
 
         assertThat(retrievedNotification.getChannel())
                 .isEqualTo(NotificationChannel.EMAIL);
@@ -73,9 +86,17 @@ class NotificationIntegrationTest extends IntegrationTest {
         assertThat(retrievedNotification.getStatus())
                 .isEqualTo(NotificationStatus.QUEUED);
 
-        assertThat(retrievedNotification.getRecipientUser().getId())
-                .isEqualTo(savedUser.getId());
+        assertThat(
+                retrievedNotification
+                        .getRecipientUser()
+                        .getId()
+        ).isEqualTo(savedUser.getId());
     }
+
+
+    // =========================================================
+    // NOTIFICATION SERVICE + RABBITMQ INTEGRATION TEST
+    // =========================================================
 
     @Test
     void shouldCreateAndQueueNotification() {
@@ -86,7 +107,8 @@ class NotificationIntegrationTest extends IntegrationTest {
                 .role(UserRole.CLIENT)
                 .build();
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                appUserRepository.save(user);
 
         SendNotificationRequest request =
                 new SendNotificationRequest(
@@ -98,26 +120,36 @@ class NotificationIntegrationTest extends IntegrationTest {
                 );
 
         NotificationResponse response =
-                notificationService.send(savedUser, request);
+                notificationService.send(
+                        savedUser,
+                        request
+                );
 
-        assertThat(response.getId()).isNotNull();
+        assertThat(response.getId())
+                .isNotNull();
 
         Notification savedNotification =
                 notificationRepository
                         .findById(response.getId())
                         .orElseThrow();
 
-        assertThat(savedNotification.getRecipientUser().getId())
-                .isEqualTo(savedUser.getId());
+        assertThat(
+                savedNotification
+                        .getRecipientUser()
+                        .getId()
+        ).isEqualTo(savedUser.getId());
 
-        assertThat(savedNotification.getRecipientAddress())
-                .isEqualTo("recipient@test.com");
+        assertThat(
+                savedNotification.getRecipientAddress()
+        ).isEqualTo("recipient@test.com");
 
         assertThat(savedNotification.getChannel())
                 .isEqualTo(NotificationChannel.EMAIL);
 
         assertThat(savedNotification.getPayload())
-                .isEqualTo("Hello from NotifyHub integration test");
+                .isEqualTo(
+                        "Hello from NotifyHub integration test"
+                );
 
         assertThat(savedNotification.getStatus())
                 .isEqualTo(NotificationStatus.QUEUED);
@@ -130,6 +162,131 @@ class NotificationIntegrationTest extends IntegrationTest {
                         "notifyhub.email.queue"
                 );
 
-        assertThat(message).isNotNull();
+        assertThat(message)
+                .isNotNull();
+    }
+
+
+    // =========================================================
+    // DEFAULT NOTIFICATION PREFERENCE TEST
+    // =========================================================
+
+    @Test
+    void shouldQueueNotificationWhenPreferenceDoesNotExist() {
+
+        AppUser user = AppUser.builder()
+                .email("default-preference@test.com")
+                .passwordHash("test-password-hash")
+                .role(UserRole.CLIENT)
+                .build();
+
+        AppUser savedUser =
+                appUserRepository.save(user);
+
+        SendNotificationRequest request =
+                new SendNotificationRequest(
+                        "recipient@test.com",
+                        NotificationChannel.EMAIL,
+                        null,
+                        "Default preference notification",
+                        null
+                );
+
+        NotificationResponse response =
+                notificationService.send(
+                        savedUser,
+                        request
+                );
+
+        Notification notification =
+                notificationRepository
+                        .findById(response.getId())
+                        .orElseThrow();
+
+        /*
+         * No preference exists for this user.
+         *
+         * The default behavior should allow
+         * notifications.
+         */
+        assertThat(notification.getStatus())
+                .isEqualTo(NotificationStatus.QUEUED);
+
+        Object message =
+                rabbitTemplate.receiveAndConvert(
+                        "notifyhub.email.queue"
+                );
+
+        assertThat(message)
+                .isNotNull();
+    }
+
+
+    // =========================================================
+    // DISABLED NOTIFICATION PREFERENCE TEST
+    // =========================================================
+
+    @Test
+    void shouldSkipNotificationWhenPreferenceIsDisabled() {
+
+        AppUser user = AppUser.builder()
+                .email("disabled-preference@test.com")
+                .passwordHash("test-password-hash")
+                .role(UserRole.CLIENT)
+                .build();
+
+        AppUser savedUser =
+                appUserRepository.save(user);
+
+        /*
+         * Disable EMAIL notifications for this user.
+         */
+        NotificationPreference preference =
+                NotificationPreference.builder()
+                        .user(savedUser)
+                        .channel(NotificationChannel.EMAIL)
+                        .enabled(false)
+                        .build();
+
+        preferenceRepository.save(preference);
+
+        SendNotificationRequest request =
+                new SendNotificationRequest(
+                        "recipient@test.com",
+                        NotificationChannel.EMAIL,
+                        null,
+                        "This notification should be skipped",
+                        null
+                );
+
+        NotificationResponse response =
+                notificationService.send(
+                        savedUser,
+                        request
+                );
+
+        Notification notification =
+                notificationRepository
+                        .findById(response.getId())
+                        .orElseThrow();
+
+        /*
+         * Since EMAIL notifications are disabled,
+         * the notification should not be queued.
+         */
+        assertThat(notification.getStatus())
+                .isEqualTo(NotificationStatus.SKIPPED);
+
+        /*
+         * Verify that no message was published
+         * to the EMAIL RabbitMQ queue.
+         */
+        Object message =
+                rabbitTemplate.receiveAndConvert(
+                        "notifyhub.email.queue"
+                );
+
+        assertThat(message)
+                .isNull();
     }
 }
