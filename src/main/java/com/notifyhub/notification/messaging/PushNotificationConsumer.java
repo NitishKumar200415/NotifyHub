@@ -1,5 +1,7 @@
 package com.notifyhub.notification.messaging;
 
+import com.notifyhub.audit.entity.NotificationAttempt;
+import com.notifyhub.audit.repository.NotificationAttemptRepository;
 import com.notifyhub.notification.entity.Notification;
 import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.repository.NotificationRepository;
@@ -14,6 +16,7 @@ public class PushNotificationConsumer {
 
     private final NotificationRepository notificationRepository;
     private final PushSenderService pushSenderService;
+    private final NotificationAttemptRepository notificationAttemptRepository;
 
     @RabbitListener(queues = "notifyhub.push.queue")
     public void consume(NotificationEvent event) {
@@ -29,6 +32,14 @@ public class PushNotificationConsumer {
 
         if (pushSent) {
 
+            notificationAttemptRepository.save(
+                    NotificationAttempt.builder()
+                            .notificationId(notification.getId())
+                            .attemptNumber(notification.getRetryCount() + 1)
+                            .status(NotificationAttempt.AttemptStatus.SUCCESS)
+                            .build()
+            );
+
             notification.setStatus(NotificationStatus.SENT);
 
             notificationRepository.save(notification);
@@ -38,6 +49,15 @@ public class PushNotificationConsumer {
 
         int retryCount =
                 notification.getRetryCount() + 1;
+
+        notificationAttemptRepository.save(
+                NotificationAttempt.builder()
+                        .notificationId(notification.getId())
+                        .attemptNumber(retryCount)
+                        .status(NotificationAttempt.AttemptStatus.FAILURE)
+                        .errorMessage("PUSH notification failed")
+                        .build()
+        );
 
         notification.setRetryCount(retryCount);
 
