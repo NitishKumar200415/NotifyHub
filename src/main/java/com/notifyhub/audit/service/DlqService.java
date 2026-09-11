@@ -11,7 +11,7 @@ import com.notifyhub.notification.messaging.NotificationProducer;
 import com.notifyhub.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import org.slf4j.MDC;
 import java.util.List;
 
 @Service
@@ -90,7 +90,8 @@ public class DlqService {
                 new NotificationEvent(
                         notification.getId(),
                         notification.getRecipientAddress(),
-                        notification.getPayload()
+                        notification.getPayload(),
+                        MDC.get("correlationId")
                 )
         );
 

@@ -7,6 +7,7 @@ import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.repository.NotificationRepository;
 import com.notifyhub.notification.service.PushSenderService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -21,57 +22,65 @@ public class PushNotificationConsumer {
     @RabbitListener(queues = "notifyhub.push.queue")
     public void consume(NotificationEvent event) {
 
-        Notification notification = notificationRepository
-                .findById(event.notificationId())
-                .orElseThrow();
+        MDC.put("correlationId", event.correlationId());
 
-        boolean pushSent = pushSenderService.sendPush(
-                notification.getRecipientAddress(),
-                notification.getPayload()
-        );
+        try {
 
-        if (pushSent) {
+            Notification notification = notificationRepository
+                    .findById(event.notificationId())
+                    .orElseThrow();
+
+            boolean pushSent = pushSenderService.sendPush(
+                    notification.getRecipientAddress(),
+                    notification.getPayload()
+            );
+
+            if (pushSent) {
+
+                notificationAttemptRepository.save(
+                        NotificationAttempt.builder()
+                                .notificationId(notification.getId())
+                                .attemptNumber(notification.getRetryCount() + 1)
+                                .status(NotificationAttempt.AttemptStatus.SUCCESS)
+                                .build()
+                );
+
+                notification.setStatus(NotificationStatus.SENT);
+
+                notificationRepository.save(notification);
+
+                return;
+            }
+
+            int retryCount =
+                    notification.getRetryCount() + 1;
 
             notificationAttemptRepository.save(
                     NotificationAttempt.builder()
                             .notificationId(notification.getId())
-                            .attemptNumber(notification.getRetryCount() + 1)
-                            .status(NotificationAttempt.AttemptStatus.SUCCESS)
+                            .attemptNumber(retryCount)
+                            .status(NotificationAttempt.AttemptStatus.FAILURE)
+                            .errorMessage("PUSH notification failed")
                             .build()
             );
 
-            notification.setStatus(NotificationStatus.SENT);
+            notification.setRetryCount(retryCount);
 
             notificationRepository.save(notification);
 
-            return;
-        }
+            if (retryCount >= 4) {
 
-        int retryCount =
-                notification.getRetryCount() + 1;
-
-        notificationAttemptRepository.save(
-                NotificationAttempt.builder()
-                        .notificationId(notification.getId())
-                        .attemptNumber(retryCount)
-                        .status(NotificationAttempt.AttemptStatus.FAILURE)
-                        .errorMessage("PUSH notification failed")
-                        .build()
-        );
-
-        notification.setRetryCount(retryCount);
-
-        notificationRepository.save(notification);
-
-        if (retryCount >= 4) {
+                throw new RuntimeException(
+                        "PUSH notification failed after max retries"
+                );
+            }
 
             throw new RuntimeException(
-                    "PUSH notification failed after max retries"
+                    "PUSH notification failed"
             );
-        }
 
-        throw new RuntimeException(
-                "PUSH notification failed"
-        );
+        } finally {
+            MDC.remove("correlationId");
+        }
     }
 }

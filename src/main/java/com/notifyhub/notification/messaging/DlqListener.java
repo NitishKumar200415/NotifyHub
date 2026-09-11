@@ -5,6 +5,7 @@ import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -22,19 +23,27 @@ public class DlqListener {
     })
     public void consume(NotificationEvent event) {
 
-        Notification notification = notificationRepository
-                .findById(event.notificationId())
-                .orElseThrow();
+        MDC.put("correlationId", event.correlationId());
 
-        notification.setStatus(
-                NotificationStatus.DEAD_LETTERED
-        );
+        try {
 
-        notificationRepository.save(notification);
+            Notification notification = notificationRepository
+                    .findById(event.notificationId())
+                    .orElseThrow();
 
-        log.error(
-                "Notification {} moved to dead-letter queue after retry exhaustion",
-                notification.getId()
-        );
+            notification.setStatus(
+                    NotificationStatus.DEAD_LETTERED
+            );
+
+            notificationRepository.save(notification);
+
+            log.error(
+                    "Notification {} moved to dead-letter queue after retry exhaustion",
+                    notification.getId()
+            );
+
+        } finally {
+            MDC.remove("correlationId");
+        }
     }
 }

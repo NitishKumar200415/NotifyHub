@@ -5,6 +5,7 @@ import java.io.Serializable;
 public record NotificationEvent(
         Long notificationId,
         String recipientAddress,
-        String channel
+        String channel,
+        String correlationId
 ) implements Serializable {
 }

@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.slf4j.MDC;
 
 import java.util.Map;
 
@@ -143,7 +144,8 @@ public class NotificationService {
                     new NotificationEvent(
                             savedNotification.getId(),
                             savedNotification.getRecipientAddress(),
-                            savedNotification.getChannel().name()
+                            savedNotification.getChannel().name(),
+                            MDC.get("correlationId")
                     );
 
             notificationProducer.publish(event);
@@ -199,7 +201,8 @@ public class NotificationService {
                 new NotificationEvent(
                         savedNotification.getId(),
                         savedNotification.getRecipientAddress(),
-                        savedNotification.getChannel().name()
+                        savedNotification.getChannel().name(),
+                        MDC.get("correlationId")
                 );
 
         notificationProducer.publish(event);
