@@ -38,7 +38,27 @@ services:
       - "6380:6379"
     volumes:
       - notifyhub_redisdata:/data
-
+  notifyhub:
+    image: notifyhub:day22
+    container_name: notifyhub-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/notifyhub
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: notifyhub
+      RABBITMQ_PASSWORD: notifyhub123
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-CHANGE-ME-this-must-be-at-least-256-bits-long-for-HS256}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      MAILTRAP_USERNAME: ${MAILTRAP_USERNAME}
+      MAILTRAP_PASSWORD: ${MAILTRAP_PASSWORD}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
 volumes:
   notifyhub_pgdata:
   notifyhub_rabbitmqdata:

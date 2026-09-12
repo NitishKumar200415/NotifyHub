@@ -3,6 +3,9 @@ package com.notifyhub.auth;
 import com.notifyhub.auth.dto.AuthResponse;
 import com.notifyhub.auth.dto.LoginRequest;
 import com.notifyhub.auth.dto.RegisterRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,20 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @Operation(
+            summary = "Register a new user",
+            description = "Creates a new user account and returns authentication details."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "User registered successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid registration data"
+            )
+    })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request) {
@@ -26,6 +43,24 @@ public class AuthController {
                 .body(response);
     }
 
+    @Operation(
+            summary = "Login user",
+            description = "Authenticates a user and returns authentication details."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Login successful"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid login data"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Invalid credentials"
+            )
+    })
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request) {

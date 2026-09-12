@@ -6,7 +6,7 @@ spring:
     name: notifyhub
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/notifyhub
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/notifyhub}
     username: notifyhub
     password: notifyhub
     driver-class-name: org.postgresql.Driver
@@ -55,7 +55,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
 
   endpoint:
     health:

@@ -7,6 +7,9 @@ import com.notifyhub.notification.dto.SendNotificationRequest;
 import com.notifyhub.notification.entity.NotificationChannel;
 import com.notifyhub.notification.entity.NotificationStatus;
 import com.notifyhub.notification.service.NotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,20 @@ public class NotificationController {
      * - Status filtering
      * - Channel filtering
      */
+    @Operation(
+            summary = "Get notification history",
+            description = "Returns the authenticated user's notification history with pagination and optional status and channel filters."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Notification history retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            )
+    })
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getAll(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -55,6 +72,24 @@ public class NotificationController {
     /*
      * Create and send a new notification.
      */
+    @Operation(
+            summary = "Send a notification",
+            description = "Creates and sends a notification through the requested delivery channel."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Notification created successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid notification data"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            )
+    })
     @PostMapping
     public ResponseEntity<NotificationResponse> send(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -86,6 +121,20 @@ public class NotificationController {
      * Example:
      * GET /api/notifications/stats
      */
+    @Operation(
+            summary = "Get notification statistics",
+            description = "Returns notification delivery statistics for the currently authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Notification statistics retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            )
+    })
     @GetMapping("/stats")
     public ResponseEntity<NotificationStatsResponse> getStats(
             @AuthenticationPrincipal AppUserDetails userDetails) {
@@ -106,6 +155,24 @@ public class NotificationController {
      * Example:
      * POST /api/notifications/123/retry
      */
+    @Operation(
+            summary = "Retry a notification",
+            description = "Manually retries a notification that previously failed or was dead-lettered."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Notification retry initiated successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Notification not found"
+            )
+    })
     @PostMapping("/{id}/retry")
     public ResponseEntity<NotificationResponse> retry(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -125,6 +192,24 @@ public class NotificationController {
      * This endpoint is placed after fixed paths such as
      * "/stats" to avoid Spring interpreting "stats" as an ID.
      */
+    @Operation(
+            summary = "Get notification by ID",
+            description = "Returns details of a specific notification belonging to the authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Notification retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Notification not found"
+            )
+    })
     @GetMapping("/{id}")
     public ResponseEntity<NotificationResponse> getById(
             @AuthenticationPrincipal AppUserDetails userDetails,
@@ -138,3 +223,4 @@ public class NotificationController {
         );
     }
 }
+
