@@ -25,4 +25,8 @@ jobs:
           cache: maven
 
       - name: Build and run tests
+        env:
+          TWILIO_ACCOUNT_SID: test
+          TWILIO_AUTH_TOKEN: test
+          TWILIO_PHONE_NUMBER: "+10000000000"
         run: mvn clean test
