@@ -102,6 +102,26 @@ Redis is used as supporting infrastructure for rate limiting, while PostgreSQL s
 
 ---
 
+## Why These Choices
+
+* **Spring Boot** — Provides a structured framework for building REST APIs with dependency injection, security, data access, messaging, and production-ready operational features.
+
+* **PostgreSQL** — Used as the primary relational database for persistent application data such as users, notifications, preferences, templates, and audit records.
+
+* **RabbitMQ** — Decouples notification requests from delivery processing. Notifications can be processed asynchronously, retried after failures, and routed to a Dead Letter Queue when processing cannot succeed.
+
+* **Redis** — Provides fast in-memory storage for rate-limiting operations without adding unnecessary load to PostgreSQL.
+
+* **JWT** — Enables stateless authentication for the REST API and supports role-based authorization.
+
+* **Docker** — Packages the application and its dependencies into reproducible containers, making the development and deployment environment consistent.
+
+* **Testcontainers** — Allows integration tests to run against real containerized infrastructure instead of relying only on mocks, increasing confidence in database and messaging integration.
+
+* **GitHub Actions** — Automatically builds the project and runs the test suite on pushes and pull requests, providing continuous integration checks.
+
+---
+
 ## Project Structure
 
 ```text
