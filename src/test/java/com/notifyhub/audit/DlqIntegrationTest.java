@@ -1,5 +1,5 @@
 package com.notifyhub.audit;
-
+import com.notifyhub.IntegrationTest;
 import com.notifyhub.audit.entity.NotificationAttempt;
 import com.notifyhub.audit.repository.NotificationAttemptRepository;
 import com.notifyhub.audit.service.DlqService;
@@ -11,7 +11,6 @@ import com.notifyhub.notification.repository.NotificationRepository;
 import com.notifyhub.notification.dto.NotificationResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.List;
@@ -19,8 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest
-class DlqIntegrationTest {
+class DlqIntegrationTest extends IntegrationTest {
 
     @Autowired
     private NotificationRepository notificationRepository;
